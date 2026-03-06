@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(where clawdbot)",
+      "Bash(for dir in basketball-coach-pro vibestate-jobs sdkagent clawd supabase)",
+      "Bash(do)",
+      "Bash(if [ -d \"/c/Users/DAD/$dir/.git\" ])",
+      "Bash(then)",
+      "Bash(echo \"$dir: HAS OWN GIT\")",
+      "Bash(else)",
+      "Bash(echo \"$dir: no git\")",
+      "Bash(fi)",
+      "Bash(done)",
+      "Bash(npm view clawdbot)",
+      "Bash(npm install -g clawdbot)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(powershell -NoProfile -Command \"Get-Process | Where-Object { $_Name -like ''*git*'' } | Select-Object Name,Id\")"
+    ]
+  }
+}
