@@ -1,184 +1,66 @@
 {
-  "images": [
+  "nodes": [
     {
-      "id": "001",
-      "thumbURL": "/assets/thumbs/001.webp",
-      "fullURL": "/assets/full/001.webp",
-      "title": "Running Through Reflection",
-      "tags": ["Sport", "Motion", "Urban", "Emotion"],
-      "description": "A study in velocity and vulnerability—capturing the fleeting intersection of movement and self-awareness.",
-      "category": "Sport"
-    },
-    {
-      "id": "002",
-      "thumbURL": "/assets/thumbs/002.webp",
-      "fullURL": "/assets/full/002.webp",
-      "title": "Fabric in Motion",
-      "tags": ["Fashion", "Texture", "Movement"],
-      "description": "Where textile becomes kinetic sculpture—exploring the dance between material and momentum.",
-      "category": "Fashion"
-    },
-    {
-      "id": "003",
-      "thumbURL": "/assets/thumbs/003.webp",
-      "fullURL": "/assets/full/003.webp",
-      "title": "Urban Geometry",
-      "tags": ["Abstract", "Architecture", "Light"],
-      "description": "Finding pattern in chaos—the mathematical poetry hidden in concrete and shadow.",
-      "category": "Abstract"
-    },
-    {
-      "id": "004",
+      "id": "m1",
+      "type": "photo",
+      "title": "Younger Self",
       "thumbURL": "/assets/thumbs/004.webp",
-      "fullURL": "/assets/full/004.webp",
-      "title": "Silent Strength",
-      "tags": ["Portrait", "Emotion", "Monochrome"],
-      "description": "The quiet power of presence—a moment of stillness that speaks volumes.",
-      "category": "Portrait"
+      "mediaURL": "/assets/full/004.webp",
+      "tags": ["Identity", "Memory", "Portrait"],
+      "emotion": "Melancholy",
+      "date": "2015-05-20",
+      "connections": ["m2", "m3"]
     },
     {
-      "id": "005",
-      "thumbURL": "/assets/thumbs/005.webp",
-      "fullURL": "/assets/full/005.webp",
-      "title": "Street Symphony",
-      "tags": ["Urban", "Culture", "Documentary"],
-      "description": "Life unfolds in the margins—documenting the unscripted moments that define a city.",
-      "category": "Urban"
+      "id": "m2",
+      "type": "journal",
+      "title": "Evening Reflections",
+      "content": "Today I felt a strange sense of deja vu. The light hitting the buildings reminded me of that summer ten years ago. Why do we hold onto the things that hurt, yet forget the ones that healed?",
+      "tags": ["Reflection", "Growth"],
+      "emotion": "Contemplative",
+      "date": "2023-11-15",
+      "connections": ["m1"]
     },
     {
-      "id": "006",
-      "thumbURL": "/assets/thumbs/006.webp",
-      "fullURL": "/assets/full/006.webp",
-      "title": "Elevation Study",
-      "tags": ["Fashion", "Editorial", "Minimalism"],
-      "description": "Less is precision—exploring the space between presence and absence.",
-      "category": "Fashion"
+      "id": "m3",
+      "type": "voice",
+      "title": "Note to Future Me",
+      "mediaURL": "/assets/voice/001.mp3",
+      "tags": ["Advice", "Future"],
+      "emotion": "Hopeful",
+      "date": "2024-01-01",
+      "connections": ["m1", "m4"]
     },
     {
-      "id": "007",
-      "thumbURL": "/assets/thumbs/007.webp",
-      "fullURL": "/assets/full/007.webp",
-      "title": "Athletic Grace",
-      "tags": ["Sport", "Performance", "Human"],
-      "description": "The body as instrument—capturing peak performance in its purest form.",
-      "category": "Sport"
+      "id": "m4",
+      "type": "photo",
+      "title": "The Path Ahead",
+      "thumbURL": "/assets/thumbs/003.webp",
+      "mediaURL": "/assets/full/003.webp",
+      "tags": ["Architecture", "Path"],
+      "emotion": "Determined",
+      "date": "2024-02-10",
+      "connections": ["m3"]
     },
     {
-      "id": "008",
-      "thumbURL": "/assets/thumbs/008.webp",
-      "fullURL": "/assets/full/008.webp",
-      "title": "Light Fragments",
-      "tags": ["Abstract", "Color", "Experimental"],
-      "description": "Decomposing reality—where light fractures into possibility.",
-      "category": "Abstract"
+      "id": "m5",
+      "type": "emotion",
+      "title": "Overwhelming Joy",
+      "tags": ["Peak Moment"],
+      "emotion": "Joy",
+      "date": "2024-03-15",
+      "connections": ["m6"]
     },
     {
-      "id": "009",
-      "thumbURL": "/assets/thumbs/009.webp",
-      "fullURL": "/assets/full/009.webp",
-      "title": "Natural Order",
-      "tags": ["Nature", "Macro", "Organic"],
-      "description": "The universe in miniature—finding infinity in the overlooked.",
-      "category": "Nature"
-    },
-    {
-      "id": "010",
-      "thumbURL": "/assets/thumbs/010.webp",
-      "fullURL": "/assets/full/010.webp",
-      "title": "Night Runner",
-      "tags": ["Sport", "Urban", "Atmosphere"],
-      "description": "When the city sleeps, the dedicated wake—solitude in motion.",
-      "category": "Sport"
-    },
-    {
-      "id": "011",
-      "thumbURL": "/assets/thumbs/011.webp",
-      "fullURL": "/assets/full/011.webp",
-      "title": "Haute Tension",
-      "tags": ["Fashion", "Drama", "Bold"],
-      "description": "Fashion as provocation—where style becomes statement.",
-      "category": "Fashion"
-    },
-    {
-      "id": "012",
-      "thumbURL": "/assets/thumbs/012.webp",
-      "fullURL": "/assets/full/012.webp",
-      "title": "Identity Layers",
-      "tags": ["Portrait", "Conceptual", "Depth"],
-      "description": "We contain multitudes—a visual meditation on the self.",
-      "category": "Portrait"
-    },
-    {
-      "id": "013",
-      "thumbURL": "/assets/thumbs/013.webp",
-      "fullURL": "/assets/full/013.webp",
-      "title": "Concrete Poetry",
-      "tags": ["Urban", "Texture", "Grit"],
-      "description": "Beauty in decay—the honest narrative of weathered surfaces.",
-      "category": "Urban"
-    },
-    {
-      "id": "014",
+      "id": "m6",
+      "type": "photo",
+      "title": "Symphony of Light",
       "thumbURL": "/assets/thumbs/014.webp",
-      "fullURL": "/assets/full/014.webp",
-      "title": "Color Field Study",
-      "tags": ["Abstract", "Vibrant", "Emotion"],
-      "description": "Pure sensation—color as feeling, unmediated by form.",
-      "category": "Abstract"
-    },
-    {
-      "id": "015",
-      "thumbURL": "/assets/thumbs/015.webp",
-      "fullURL": "/assets/full/015.webp",
-      "title": "Victory Silence",
-      "tags": ["Sport", "Triumph", "Intimate"],
-      "description": "After the roar—the private moment when achievement becomes real.",
-      "category": "Sport"
-    },
-    {
-      "id": "016",
-      "thumbURL": "/assets/thumbs/016.webp",
-      "fullURL": "/assets/full/016.webp",
-      "title": "Textile Architecture",
-      "tags": ["Fashion", "Structure", "Innovation"],
-      "description": "When fabric defies gravity—engineering meets artistry.",
-      "category": "Fashion"
-    },
-    {
-      "id": "017",
-      "thumbURL": "/assets/thumbs/017.webp",
-      "fullURL": "/assets/full/017.webp",
-      "title": "Earth Tones",
-      "tags": ["Nature", "Landscape", "Timeless"],
-      "description": "The planet's patient palette—geology as art.",
-      "category": "Nature"
-    },
-    {
-      "id": "018",
-      "thumbURL": "/assets/thumbs/018.webp",
-      "fullURL": "/assets/full/018.webp",
-      "title": "Metropolitan Rhythm",
-      "tags": ["Urban", "Energy", "Flow"],
-      "description": "The city breathes—capturing the pulse of collective motion.",
-      "category": "Urban"
-    },
-    {
-      "id": "019",
-      "thumbURL": "/assets/thumbs/019.webp",
-      "fullURL": "/assets/full/019.webp",
-      "title": "Raw Presence",
-      "tags": ["Portrait", "Authenticity", "Power"],
-      "description": "Unfiltered humanity—the strength in showing up as you are.",
-      "category": "Portrait"
-    },
-    {
-      "id": "020",
-      "thumbURL": "/assets/thumbs/020.webp",
-      "fullURL": "/assets/full/020.webp",
-      "title": "Form Language",
-      "tags": ["Abstract", "Minimalism", "Balance"],
-      "description": "Speaking in shapes—the eloquence of essential form.",
-      "category": "Abstract"
+      "mediaURL": "/assets/full/014.webp",
+      "tags": ["Abstract", "Color"],
+      "emotion": "Joy",
+      "date": "2024-03-15",
+      "connections": ["m5"]
     }
   ]
 }

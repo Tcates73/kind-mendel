@@ -1,15 +1,14 @@
-import { useState, useMemo, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Environment } from '@react-three/drei';
+import { OrbitControls, Stars, Sparkles } from '@react-three/drei';
 import { ImageCard } from './ImageCard';
-import { CategoryFilter } from './CategoryFilter';
-import { ReducedMotionToggle } from './ReducedMotionToggle';
+import { GraphLinks } from './GraphLinks';
 import { useReducedMotion } from '../hooks/useReducedMotion';
-import { useImagePreloader } from '../hooks/useImagePreloader';
-import { GalleryImage } from '../types';
+import { useGraphPhysics } from '../hooks/useGraphPhysics';
+import { MemoryNode } from '../types';
 
 interface Gallery3DProps {
-  images: GalleryImage[];
+  nodes: MemoryNode[];
 }
 
 const LoadingFallback = () => (
@@ -19,91 +18,80 @@ const LoadingFallback = () => (
   </mesh>
 );
 
-export const Gallery3D: React.FC<Gallery3DProps> = ({ images }) => {
+export const Gallery3D: React.FC<Gallery3DProps> = ({ nodes }) => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const systemReducedMotion = useReducedMotion();
-  const [manualReducedMotion, setManualReducedMotion] = useState(false);
+  const [manualReducedMotion] = useState(false);
 
   const reducedMotion = systemReducedMotion || manualReducedMotion;
 
-  const { preloadFullImage, preloadNearbyImages } = useImagePreloader(images);
-
-  const categories = useMemo(() => {
-    const uniqueCategories = new Set(images.map(img => img.category));
-    return Array.from(uniqueCategories).sort();
-  }, [images]);
+  const { positions, updateNodePosition, releaseNode } = useGraphPhysics(nodes);
 
   const handleHover = (id: string | null) => {
     setHoveredId(id);
-
-    if (id) {
-      preloadFullImage(id);
-      preloadNearbyImages(id);
-    }
-  };
-
-  const handleCategoryChange = (category: string | null) => {
-    setActiveCategory(category);
-    setHoveredId(null);
   };
 
   return (
     <>
-      <CategoryFilter
-        categories={categories}
-        activeCategory={activeCategory}
-        onCategoryChange={handleCategoryChange}
-        reducedMotion={reducedMotion}
-      />
-
-      <ReducedMotionToggle
-        reducedMotion={reducedMotion}
-        onToggle={() => setManualReducedMotion(!manualReducedMotion)}
-      />
-
       <Canvas
-        camera={{ position: [0, 0, 10], fov: 60 }}
+        camera={{ position: [0, 0, 15], fov: 60 }}
         style={{
           width: '100vw',
           height: '100vh',
-          background: 'linear-gradient(to bottom, #0a0a0a, #1a1a1a)',
+          background: '#000000',
         }}
         gl={{
           antialias: true,
           powerPreference: 'high-performance',
         }}
       >
-        <ambientLight intensity={0.5} />
-        <directionalLight position={[10, 10, 5]} intensity={1} />
-        <pointLight position={[0, 0, 5]} intensity={0.5} />
+        <color attach="background" args={['#000000']} />
+        <fog attach="fog" args={['#000000', 10, 25]} />
+        <ambientLight intensity={0.2} />
+        <pointLight position={[0, 0, 0]} intensity={2} color="#00ffff" />
 
         <Suspense fallback={<LoadingFallback />}>
+          <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
+          <Sparkles count={200} scale={20} size={1} speed={0.3} color="#00ffff" />
+
+          {/* Black Hole Singularity */}
           <group>
-            {images.map((image, index) => (
+            <mesh position={[0, 0, 0]}>
+              <sphereGeometry args={[2, 32, 32]} />
+              <meshBasicMaterial color="#000000" />
+            </mesh>
+            <mesh position={[0, 0, 0]} scale={1.05}>
+              <sphereGeometry args={[2, 32, 32]} />
+              <meshBasicMaterial color="#00ffff" transparent opacity={0.05} wireframe />
+            </mesh>
+          </group>
+
+          <group>
+            <GraphLinks nodes={nodes} positions={positions} />
+            {nodes.map((node, index) => (
               <ImageCard
-                key={image.id}
-                image={image}
+                key={node.id}
+                node={node}
                 index={index}
-                totalImages={images.length}
-                isHovered={hoveredId === image.id}
+                totalNodes={nodes.length}
+                position={positions[node.id] || [0, 0, 0]}
+                isHovered={hoveredId === node.id}
                 onHover={handleHover}
                 hoveredId={hoveredId}
-                activeCategory={activeCategory}
                 reducedMotion={reducedMotion}
+                onDrag={(pos) => updateNodePosition(node.id, pos)}
+                onDragEnd={() => releaseNode(node.id)}
               />
             ))}
           </group>
-
-          <Environment preset="city" />
 
           <OrbitControls
             enableZoom={true}
             enablePan={true}
             enableRotate={!hoveredId}
             minDistance={5}
-            maxDistance={20}
-            rotateSpeed={reducedMotion ? 0.1 : 0.5}
+            maxDistance={30}
+            rotateSpeed={0.5}
             zoomSpeed={0.5}
           />
         </Suspense>
