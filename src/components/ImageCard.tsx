@@ -1,11 +1,11 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, memo } from 'react';
 import { useFrame, useThree, ThreeEvent } from '@react-three/fiber';
 import { Image, Html } from '@react-three/drei';
 import { motion } from 'framer-motion';
 import * as THREE from 'three';
 import { ImageCardProps } from '../types';
 
-export const ImageCard: React.FC<ImageCardProps> = ({
+export const ImageCard = memo(({
   node,
   position,
   isHovered,
@@ -13,7 +13,7 @@ export const ImageCard: React.FC<ImageCardProps> = ({
   hoveredId,
   onDrag,
   onDragEnd,
-}) => {
+}: ImageCardProps) => {
   const groupRef = useRef<THREE.Group>(null);
   const [isDragging, setIsDragging] = useState(false);
   const { raycaster } = useThree();
@@ -198,4 +198,22 @@ export const ImageCard: React.FC<ImageCardProps> = ({
       )}
     </group>
   );
-};
+}, (prevProps, nextProps) => {
+  // Bolt Optimization: Only re-render when properties that affect React rendering change.
+  // We compare position values element-by-element since physical coordinate arrays are
+  // re-created on each physics simulation tick, which would fail standard reference equality.
+  // We bypass inline functions because their actions are identical for the same node ID.
+  return (
+    prevProps.node.id === nextProps.node.id &&
+    prevProps.node.type === nextProps.node.type &&
+    prevProps.node.thumbURL === nextProps.node.thumbURL &&
+    prevProps.index === nextProps.index &&
+    prevProps.totalNodes === nextProps.totalNodes &&
+    prevProps.isHovered === nextProps.isHovered &&
+    prevProps.hoveredId === nextProps.hoveredId &&
+    prevProps.reducedMotion === nextProps.reducedMotion &&
+    prevProps.position[0] === nextProps.position[0] &&
+    prevProps.position[1] === nextProps.position[1] &&
+    prevProps.position[2] === nextProps.position[2]
+  );
+});
