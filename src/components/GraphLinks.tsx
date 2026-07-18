@@ -26,27 +26,59 @@ export const GraphLinks: React.FC<GraphLinksProps> = ({ nodes, positions }) => {
   useFrame(() => {
     if (!lineGeometry.current) return;
 
-    const vertices: number[] = [];
-    links.forEach(link => {
+    // First count how many links have both source and target positions ready
+    let activeLinksCount = 0;
+    for (let i = 0; i < links.length; i++) {
+      const link = links[i];
+      if (positions[link.source] && positions[link.target]) {
+        activeLinksCount++;
+      }
+    }
+    const verticesLength = activeLinksCount * 6;
+
+    if (verticesLength === 0) {
+      // If no node positions are populated yet, clear the position attribute if it exists
+      const positionAttr = lineGeometry.current.getAttribute('position') as THREE.BufferAttribute;
+      if (positionAttr && positionAttr.array.length > 0) {
+        lineGeometry.current.deleteAttribute('position');
+      }
+      return;
+    }
+
+    const positionAttr = lineGeometry.current.getAttribute('position') as THREE.BufferAttribute;
+
+    let arr: Float32Array;
+    // Bolt Optimization: If the buffer array already exists with the correct length, reuse it in-place.
+    // This avoids creating temporary arrays and invoking garbage collection during the 60fps render loop.
+    if (positionAttr && positionAttr.array.length === verticesLength) {
+      arr = positionAttr.array as Float32Array;
+    } else {
+      arr = new Float32Array(verticesLength);
+    }
+
+    let index = 0;
+    for (let i = 0; i < links.length; i++) {
+      const link = links[i];
       const start = positions[link.source];
       const end = positions[link.target];
       if (start && end) {
-        vertices.push(...start, ...end);
+        arr[index++] = start[0];
+        arr[index++] = start[1];
+        arr[index++] = start[2];
+        arr[index++] = end[0];
+        arr[index++] = end[1];
+        arr[index++] = end[2];
       }
-    });
+    }
 
-    const positionAttr = lineGeometry.current.getAttribute('position') as THREE.BufferAttribute;
-    if (positionAttr && positionAttr.array.length === vertices.length) {
-      // Cast the Float32Array to number[] or copy values directly to avoid any type discrepancy
-      const arr = positionAttr.array as Float32Array;
-      for (let i = 0; i < vertices.length; i++) {
-        arr[i] = vertices[i];
-      }
+    if (positionAttr && positionAttr.array.length === verticesLength) {
+      // Mark the attribute as needing an update to tell WebGL to re-upload the modified array
       positionAttr.needsUpdate = true;
     } else {
+      // Create a new BufferAttribute if length changed or was not set
       lineGeometry.current.setAttribute(
         'position',
-        new THREE.Float32BufferAttribute(vertices, 3)
+        new THREE.Float32BufferAttribute(arr, 3)
       );
     }
   });

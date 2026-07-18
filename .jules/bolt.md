@@ -1,0 +1,5 @@
+# Bolt's Journal
+
+## 2025-07-18 - R3F Off-React-Thread Rendering Pattern
+**Learning:** In React-Three-Fiber (R3F), when 3D object positions are updated continuously by a physics engine or tickers, rendering performance degrades if we trigger standard React component re-renders for every single update. Because the position updates are handled imperatively inside the `useFrame` hook (e.g. by mutating `groupRef.current.position.lerp()`), the component's JSX structure, material bindings, and React Fiber nodes do not need to re-render. Standard `React.memo` fails here because parent renders re-create new position array instances on every frame.
+**Action:** Always wrap R3F elements (like `ImageCard`) in `React.memo` with a custom comparator that does deep numeric comparison of coordinates (`prevProps.position[0] === nextProps.position[0]` etc.) and bypasses inline callbacks. This shields the React render tree from frequent physical simulation updates while still keeping the `useFrame` animation fully functional.
