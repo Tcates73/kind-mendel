@@ -6,6 +6,15 @@ export const useGraphPhysics = (nodes: MemoryNode[]) => {
   const [positions, setPositions] = useState<{ [key: string]: [number, number, number] }>({});
   const simulation = useRef<any>(null);
 
+  // Bolt Optimization: Keep a persistent reference to the latest positions state
+  // to compare and reuse array references in tick callbacks.
+  const positionsRef = useRef<{ [key: string]: [number, number, number] }>({});
+
+  const updatePositionsState = (newPositions: { [key: string]: [number, number, number] }) => {
+    positionsRef.current = newPositions;
+    setPositions(newPositions);
+  };
+
   useEffect(() => {
     const d3Nodes = nodes.map(node => ({ ...node }));
     const d3Links = nodes.flatMap(node =>
@@ -23,11 +32,45 @@ export const useGraphPhysics = (nodes: MemoryNode[]) => {
       .force('center', (d3 as any).forceCenter(0, 0, 0))
       .force('radial', (d3 as any).forceRadial(10, 0, 0, 0).strength(0.5))
       .on('tick', () => {
+        const currentPositions = positionsRef.current;
         const newPositions: { [key: string]: [number, number, number] } = {};
+        let changed = false;
+
         d3Nodes.forEach((node: any) => {
-          newPositions[node.id] = [node.x || 0, node.y || 0, node.z || 0];
+          const x = node.x || 0;
+          const y = node.y || 0;
+          const z = node.z || 0;
+
+          const prev = currentPositions[node.id];
+          // Bolt Optimization: Only allocate a new array if the node has moved
+          // beyond a microscopic threshold (1e-4). If the position change is
+          // negligible, we reuse the exact same array reference (prev). This
+          // is 100% React-compliant, avoids GC thrashing, and allows React.memo
+          // to perfectly bail out of rendering stable nodes.
+          if (!prev || Math.abs(prev[0] - x) > 1e-4 || Math.abs(prev[1] - y) > 1e-4 || Math.abs(prev[2] - z) > 1e-4) {
+            newPositions[node.id] = [x, y, z];
+            changed = true;
+          } else {
+            newPositions[node.id] = prev;
+          }
         });
-        setPositions(newPositions);
+
+        // Ensure deleted nodes are cleaned up from state
+        const prevKeys = Object.keys(currentPositions);
+        if (prevKeys.length !== d3Nodes.length) {
+          changed = true;
+        } else {
+          for (let i = 0; i < d3Nodes.length; i++) {
+            if (!currentPositions[d3Nodes[i].id]) {
+              changed = true;
+              break;
+            }
+          }
+        }
+
+        if (changed) {
+          updatePositionsState(newPositions);
+        }
       });
 
     return () => simulation.current.stop();
