@@ -11,6 +11,10 @@ interface Gallery3DProps {
   nodes: MemoryNode[];
 }
 
+// Bolt Optimization: Define fallback position as a static module-level constant to prevent repetitive
+// array allocations and reduce GC pressure during rapid R3F render ticks.
+const DEFAULT_POSITION: [number, number, number] = [0, 0, 0];
+
 const LoadingFallback = () => (
   <mesh>
     <boxGeometry args={[1, 1, 1]} />
@@ -74,13 +78,13 @@ export const Gallery3D: React.FC<Gallery3DProps> = ({ nodes }) => {
                 node={node}
                 index={index}
                 totalNodes={nodes.length}
-                position={positions[node.id] || [0, 0, 0]}
+                position={positions[node.id] || DEFAULT_POSITION}
                 isHovered={hoveredId === node.id}
                 onHover={handleHover}
                 hoveredId={hoveredId}
                 reducedMotion={reducedMotion}
-                onDrag={(pos) => updateNodePosition(node.id, pos)}
-                onDragEnd={() => releaseNode(node.id)}
+                onDrag={updateNodePosition}
+                onDragEnd={releaseNode}
               />
             ))}
           </group>

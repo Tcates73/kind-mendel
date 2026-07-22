@@ -29,7 +29,7 @@ export const ImageCard = memo(({
       const intersection = new THREE.Vector3();
       raycaster.ray.intersectPlane(plane, intersection);
 
-      onDrag([intersection.x, intersection.y, intersection.z]);
+      onDrag(node.id, [intersection.x, intersection.y, intersection.z]);
     } else {
       const targetPos = isHovered ? centerPosition : position;
       groupRef.current.position.lerp(new THREE.Vector3(...targetPos), 0.1);
@@ -83,7 +83,7 @@ export const ImageCard = memo(({
               (e.nativeEvent.target as any).releasePointerCapture(e.pointerId);
             }
             setIsDragging(false);
-            onDragEnd();
+            onDragEnd(node.id);
           }}
         >
           {/* Glowing wireframe outline */}
@@ -120,7 +120,7 @@ export const ImageCard = memo(({
               (e.nativeEvent.target as any).releasePointerCapture(e.pointerId);
             }
             setIsDragging(false);
-            onDragEnd();
+            onDragEnd(node.id);
           }}
         >
           <planeGeometry args={[1.5, 1]} />
