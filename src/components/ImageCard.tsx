@@ -5,6 +5,15 @@ import { motion } from 'framer-motion';
 import * as THREE from 'three';
 import { ImageCardProps } from '../types';
 
+// Bolt Optimization: Pre-allocate static Three.js math helpers and constant positions outside of the component.
+// This prevents garbage collection thrashing by completely removing temporary Vector3 and Plane allocations
+// from the high-frequency (60fps) rendering loop across all rendered cards.
+const planeNormal = new THREE.Vector3(0, 0, 1);
+const dragPlane = new THREE.Plane();
+const dragIntersection = new THREE.Vector3();
+const scratchVector = new THREE.Vector3();
+const centerPosition: [number, number, number] = [0, 0, 5];
+
 export const ImageCard = memo(({
   node,
   position,
@@ -19,20 +28,21 @@ export const ImageCard = memo(({
   const { raycaster } = useThree();
 
   const isOtherHovered = hoveredId !== null && hoveredId !== node.id;
-  const centerPosition: [number, number, number] = [0, 0, 5];
 
   useFrame(() => {
     if (!groupRef.current) return;
 
     if (isDragging) {
-      const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -groupRef.current.position.z);
-      const intersection = new THREE.Vector3();
-      raycaster.ray.intersectPlane(plane, intersection);
+      // Configure drag plane normal and constant offset in-place
+      dragPlane.set(planeNormal, -groupRef.current.position.z);
+      raycaster.ray.intersectPlane(dragPlane, dragIntersection);
 
-      onDrag([intersection.x, intersection.y, intersection.z]);
+      onDrag([dragIntersection.x, dragIntersection.y, dragIntersection.z]);
     } else {
       const targetPos = isHovered ? centerPosition : position;
-      groupRef.current.position.lerp(new THREE.Vector3(...targetPos), 0.1);
+      // Re-use scratchVector in-place to avoid new THREE.Vector3(...targetPos) allocations
+      scratchVector.set(targetPos[0], targetPos[1], targetPos[2]);
+      groupRef.current.position.lerp(scratchVector, 0.1);
     }
 
     const pos = groupRef.current.position;
