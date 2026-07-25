@@ -26,8 +26,8 @@ export interface ImageCardProps {
   onHover: (id: string | null) => void;
   hoveredId: string | null;
   reducedMotion: boolean;
-  onDrag: (pos: [number, number, number]) => void;
-  onDragEnd: () => void;
+  onDrag: (id: string, pos: [number, number, number]) => void;
+  onDragEnd: (id: string) => void;
 }
 
 // Deprecated - for backward compatibility during transition
