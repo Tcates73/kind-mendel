@@ -24,6 +24,13 @@ export const useGraphPhysics = (nodes: MemoryNode[]) => {
       }))
     );
 
+    // Bolt Optimization: The set of nodes and their IDs in the simulation are constant during
+    // the lifespan of a single useEffect hook execution. We only need to check for mismatches
+    // or deletions between previous state keys and d3Nodes on the *very first tick* of a restarted
+    // simulation. All subsequent ticks can skip key counting and lookup checks, avoiding Object.keys
+    // allocations and iteration overhead entirely.
+    let isFirstTick = true;
+
     simulation.current = (d3 as any).forceSimulation()
       .numDimensions(3)
       .nodes(d3Nodes)
@@ -55,15 +62,24 @@ export const useGraphPhysics = (nodes: MemoryNode[]) => {
           }
         });
 
-        // Ensure deleted nodes are cleaned up from state
-        const prevKeys = Object.keys(currentPositions);
-        if (prevKeys.length !== d3Nodes.length) {
-          changed = true;
-        } else {
-          for (let i = 0; i < d3Nodes.length; i++) {
-            if (!currentPositions[d3Nodes[i].id]) {
-              changed = true;
-              break;
+        if (isFirstTick) {
+          isFirstTick = false;
+          // Use an allocation-free loop instead of Object.keys(currentPositions) to count previous keys
+          let prevKeysCount = 0;
+          for (const key in currentPositions) {
+            if (Object.prototype.hasOwnProperty.call(currentPositions, key)) {
+              prevKeysCount++;
+            }
+          }
+
+          if (prevKeysCount !== d3Nodes.length) {
+            changed = true;
+          } else {
+            for (let i = 0; i < d3Nodes.length; i++) {
+              if (!currentPositions[d3Nodes[i].id]) {
+                changed = true;
+                break;
+              }
             }
           }
         }
