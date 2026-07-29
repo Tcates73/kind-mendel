@@ -18,6 +18,8 @@ const LoadingFallback = () => (
   </mesh>
 );
 
+import { useCallback } from 'react';
+
 export const Gallery3D: React.FC<Gallery3DProps> = ({ nodes }) => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const systemReducedMotion = useReducedMotion();
@@ -27,9 +29,19 @@ export const Gallery3D: React.FC<Gallery3DProps> = ({ nodes }) => {
 
   const { positions, updateNodePosition, releaseNode } = useGraphPhysics(nodes);
 
-  const handleHover = (id: string | null) => {
+  const handleHover = useCallback((id: string | null) => {
     setHoveredId(id);
-  };
+  }, []);
+
+  // Bolt Optimization: Stable memoized useCallback references for drag events on high-frequency rendering contexts.
+  // This eliminates dynamic inline arrow function allocations in the node mapping loop, avoiding GC thrashing.
+  const handleDrag = useCallback((id: string, pos: [number, number, number]) => {
+    updateNodePosition(id, pos);
+  }, [updateNodePosition]);
+
+  const handleDragEnd = useCallback((id: string) => {
+    releaseNode(id);
+  }, [releaseNode]);
 
   return (
     <>
@@ -79,8 +91,8 @@ export const Gallery3D: React.FC<Gallery3DProps> = ({ nodes }) => {
                 onHover={handleHover}
                 hoveredId={hoveredId}
                 reducedMotion={reducedMotion}
-                onDrag={(pos) => updateNodePosition(node.id, pos)}
-                onDragEnd={() => releaseNode(node.id)}
+                onDrag={handleDrag}
+                onDragEnd={handleDragEnd}
               />
             ))}
           </group>
