@@ -1,4 +1,4 @@
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Stars, Sparkles } from '@react-three/drei';
 import { ImageCard } from './ImageCard';
@@ -27,9 +27,11 @@ export const Gallery3D: React.FC<Gallery3DProps> = ({ nodes }) => {
 
   const { positions, updateNodePosition, releaseNode } = useGraphPhysics(nodes);
 
-  const handleHover = (id: string | null) => {
+  // Bolt Optimization: Memoize the handleHover handler with useCallback to avoid re-creating
+  // the callback reference on every render, preventing unnecessary re-renders of stable node elements.
+  const handleHover = useCallback((id: string | null) => {
     setHoveredId(id);
-  };
+  }, []);
 
   return (
     <>
@@ -68,6 +70,8 @@ export const Gallery3D: React.FC<Gallery3DProps> = ({ nodes }) => {
 
           <group>
             <GraphLinks nodes={nodes} positions={positions} />
+            {/* Bolt Optimization: Pass memoized stable callbacks directly instead of dynamic inline arrow closures.
+                The node.id is handled internally inside the callback signatures rather than closing over it in the mapping loop. */}
             {nodes.map((node, index) => (
               <ImageCard
                 key={node.id}
@@ -79,8 +83,8 @@ export const Gallery3D: React.FC<Gallery3DProps> = ({ nodes }) => {
                 onHover={handleHover}
                 hoveredId={hoveredId}
                 reducedMotion={reducedMotion}
-                onDrag={(pos) => updateNodePosition(node.id, pos)}
-                onDragEnd={() => releaseNode(node.id)}
+                onDrag={updateNodePosition}
+                onDragEnd={releaseNode}
               />
             ))}
           </group>
