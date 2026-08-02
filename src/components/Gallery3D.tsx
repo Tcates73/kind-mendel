@@ -1,4 +1,4 @@
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Stars, Sparkles } from '@react-three/drei';
 import { ImageCard } from './ImageCard';
@@ -27,9 +27,9 @@ export const Gallery3D: React.FC<Gallery3DProps> = ({ nodes }) => {
 
   const { positions, updateNodePosition, releaseNode } = useGraphPhysics(nodes);
 
-  const handleHover = (id: string | null) => {
+  const handleHover = useCallback((id: string | null) => {
     setHoveredId(id);
-  };
+  }, []);
 
   return (
     <>
@@ -68,21 +68,25 @@ export const Gallery3D: React.FC<Gallery3DProps> = ({ nodes }) => {
 
           <group>
             <GraphLinks nodes={nodes} positions={positions} />
-            {nodes.map((node, index) => (
-              <ImageCard
-                key={node.id}
-                node={node}
-                index={index}
-                totalNodes={nodes.length}
-                position={positions[node.id] || [0, 0, 0]}
-                isHovered={hoveredId === node.id}
-                onHover={handleHover}
-                hoveredId={hoveredId}
-                reducedMotion={reducedMotion}
-                onDrag={(pos) => updateNodePosition(node.id, pos)}
-                onDragEnd={() => releaseNode(node.id)}
-              />
-            ))}
+            {nodes.map((node, index) => {
+              const isHovered = hoveredId === node.id;
+              const isOtherHovered = hoveredId !== null && hoveredId !== node.id;
+              return (
+                <ImageCard
+                  key={node.id}
+                  node={node}
+                  index={index}
+                  totalNodes={nodes.length}
+                  position={positions[node.id] || [0, 0, 0]}
+                  isHovered={isHovered}
+                  onHover={handleHover}
+                  isOtherHovered={isOtherHovered}
+                  reducedMotion={reducedMotion}
+                  onDrag={updateNodePosition}
+                  onDragEnd={releaseNode}
+                />
+              );
+            })}
           </group>
 
           <OrbitControls
