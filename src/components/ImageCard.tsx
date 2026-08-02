@@ -19,15 +19,13 @@ export const ImageCard = memo(({
   position,
   isHovered,
   onHover,
-  hoveredId,
+  isOtherHovered,
   onDrag,
   onDragEnd,
 }: ImageCardProps) => {
   const groupRef = useRef<THREE.Group>(null);
   const [isDragging, setIsDragging] = useState(false);
   const { raycaster } = useThree();
-
-  const isOtherHovered = hoveredId !== null && hoveredId !== node.id;
 
   useFrame(() => {
     if (!groupRef.current) return;
@@ -37,7 +35,7 @@ export const ImageCard = memo(({
       dragPlane.set(planeNormal, -groupRef.current.position.z);
       raycaster.ray.intersectPlane(dragPlane, dragIntersection);
 
-      onDrag([dragIntersection.x, dragIntersection.y, dragIntersection.z]);
+      onDrag(node.id, [dragIntersection.x, dragIntersection.y, dragIntersection.z]);
     } else {
       const targetPos = isHovered ? centerPosition : position;
       // Re-use scratchVector in-place to avoid new THREE.Vector3(...targetPos) allocations
@@ -93,7 +91,7 @@ export const ImageCard = memo(({
               (e.nativeEvent.target as any).releasePointerCapture(e.pointerId);
             }
             setIsDragging(false);
-            onDragEnd();
+            onDragEnd(node.id);
           }}
         >
           {/* Glowing wireframe outline */}
@@ -130,7 +128,7 @@ export const ImageCard = memo(({
               (e.nativeEvent.target as any).releasePointerCapture(e.pointerId);
             }
             setIsDragging(false);
-            onDragEnd();
+            onDragEnd(node.id);
           }}
         >
           <planeGeometry args={[1.5, 1]} />
@@ -220,7 +218,7 @@ export const ImageCard = memo(({
     prevProps.index === nextProps.index &&
     prevProps.totalNodes === nextProps.totalNodes &&
     prevProps.isHovered === nextProps.isHovered &&
-    prevProps.hoveredId === nextProps.hoveredId &&
+    prevProps.isOtherHovered === nextProps.isOtherHovered &&
     prevProps.reducedMotion === nextProps.reducedMotion &&
     prevProps.position[0] === nextProps.position[0] &&
     prevProps.position[1] === nextProps.position[1] &&
