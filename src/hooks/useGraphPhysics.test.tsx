@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { expect, test, vi } from 'vitest';
 import * as React from 'react';
 import { useGraphPhysics } from './useGraphPhysics';
@@ -11,6 +12,7 @@ vi.mock('react', async (importOriginal) => {
     useState: vi.fn(),
     useRef: vi.fn(),
     useEffect: vi.fn(),
+    useCallback: vi.fn((fn) => fn),
   };
 });
 
