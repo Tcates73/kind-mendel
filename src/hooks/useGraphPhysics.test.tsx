@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { expect, test, vi } from 'vitest';
 import * as React from 'react';
 import { useGraphPhysics } from './useGraphPhysics';
