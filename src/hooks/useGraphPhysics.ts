@@ -10,6 +10,10 @@ export const useGraphPhysics = (nodes: MemoryNode[]) => {
   // to compare and reuse array references in tick callbacks.
   const positionsRef = useRef<{ [key: string]: [number, number, number] }>({});
 
+  // Bolt Optimization: Maintain an O(1) Map lookup index for simulation nodes by ID
+  // to eliminate O(N) array scanning via .find() during high-frequency 60fps drag operations.
+  const nodesByIdRef = useRef<Map<string, any>>(new Map());
+
   const updatePositionsState = (newPositions: { [key: string]: [number, number, number] }) => {
     positionsRef.current = newPositions;
     setPositions(newPositions);
@@ -17,6 +21,14 @@ export const useGraphPhysics = (nodes: MemoryNode[]) => {
 
   useEffect(() => {
     const d3Nodes = nodes.map(node => ({ ...node }));
+
+    // Index simulation nodes by ID in O(1) Map
+    const nodeMap = new Map<string, any>();
+    d3Nodes.forEach(node => {
+      nodeMap.set(node.id, node);
+    });
+    nodesByIdRef.current = nodeMap;
+
     const d3Links = nodes.flatMap(node =>
       node.connections.map(targetId => ({
         source: node.id,
@@ -94,7 +106,7 @@ export const useGraphPhysics = (nodes: MemoryNode[]) => {
 
   const updateNodePosition = (id: string, pos: [number, number, number]) => {
     if (simulation.current) {
-      const node = simulation.current.nodes().find((n: any) => n.id === id);
+      const node = nodesByIdRef.current.get(id);
       if (node) {
         node.fx = pos[0];
         node.fy = pos[1];
@@ -106,7 +118,7 @@ export const useGraphPhysics = (nodes: MemoryNode[]) => {
 
   const releaseNode = (id: string) => {
     if (simulation.current) {
-      const node = simulation.current.nodes().find((n: any) => n.id === id);
+      const node = nodesByIdRef.current.get(id);
       if (node) {
         node.fx = null;
         node.fy = null;
