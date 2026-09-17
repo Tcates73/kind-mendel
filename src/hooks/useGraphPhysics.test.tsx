@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { expect, test, vi } from 'vitest';
 import * as React from 'react';
 import { useGraphPhysics } from './useGraphPhysics';
@@ -25,9 +26,11 @@ test('useGraphPhysics maintains coordinate array references and avoids unnecessa
 
   const simulationRefObj = { current: null };
   const positionsRefObj = { current: {} as { [key: string]: [number, number, number] } };
+  const nodesByIdRefObj = { current: new Map() };
   vi.mocked(React.useRef)
     .mockReturnValueOnce(simulationRefObj) // first call is simulation
-    .mockReturnValueOnce(positionsRefObj); // second call is positionsRef
+    .mockReturnValueOnce(positionsRefObj) // second call is positionsRef
+    .mockReturnValueOnce(nodesByIdRefObj); // third call is nodesByIdRef
 
   let effectCallback: any = null;
   vi.mocked(React.useEffect).mockImplementation((cb) => {
@@ -54,7 +57,7 @@ test('useGraphPhysics maintains coordinate array references and avoids unnecessa
   ];
 
   // Invoke hook
-  useGraphPhysics(mockNodes);
+  const { updateNodePosition, releaseNode } = useGraphPhysics(mockNodes);
 
   // Verify useEffect was registered
   expect(effectCallback).toBeTypeOf('function');
@@ -135,4 +138,15 @@ test('useGraphPhysics maintains coordinate array references and avoids unnecessa
   expect(setPositionsMock).not.toHaveBeenCalled();
   expect(positionsRefObj.current['node1']).toBe(node1ArrayRef2);
   expect(positionsRefObj.current['node2']).toBe(node2ArrayRef2);
+
+  // Test O(1) drag update and release node functions
+  updateNodePosition('node1', [10, 20, 30]);
+  expect(d3Nodes[0].fx).toBe(10);
+  expect(d3Nodes[0].fy).toBe(20);
+  expect(d3Nodes[0].fz).toBe(30);
+
+  releaseNode('node1');
+  expect(d3Nodes[0].fx).toBeNull();
+  expect(d3Nodes[0].fy).toBeNull();
+  expect(d3Nodes[0].fz).toBeNull();
 });
