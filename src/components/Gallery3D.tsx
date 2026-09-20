@@ -18,6 +18,10 @@ const LoadingFallback = () => (
   </mesh>
 );
 
+// Bolt Optimization: Pre-allocate static fallback array outside of component scope
+// to prevent repetitive array allocations and reduce GC pressure when position is uninitialized.
+const DEFAULT_POSITION: [number, number, number] = [0, 0, 0];
+
 export const Gallery3D: React.FC<Gallery3DProps> = ({ nodes }) => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const systemReducedMotion = useReducedMotion();
@@ -74,7 +78,7 @@ export const Gallery3D: React.FC<Gallery3DProps> = ({ nodes }) => {
                 node={node}
                 index={index}
                 totalNodes={nodes.length}
-                position={positions[node.id] || [0, 0, 0]}
+                position={positions[node.id] || DEFAULT_POSITION}
                 isHovered={hoveredId === node.id}
                 onHover={handleHover}
                 hoveredId={hoveredId}
