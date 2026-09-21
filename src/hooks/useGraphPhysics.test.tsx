@@ -1,23 +1,25 @@
+// @ts-ignore
 import { expect, test, vi } from 'vitest';
 import * as React from 'react';
 import { useGraphPhysics } from './useGraphPhysics';
 import { MemoryNode } from '../types';
 
 // Mock react to spy/intercept the hooks
-vi.mock('react', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('react')>();
+vi.mock('react', async (importOriginal: any) => {
+  const actual = await (importOriginal as () => Promise<typeof import('react')>)();
   return {
     ...actual,
     useState: vi.fn(),
     useRef: vi.fn(),
     useEffect: vi.fn(),
+    useCallback: vi.fn((fn: any) => fn),
   };
 });
 
 test('useGraphPhysics maintains coordinate array references and avoids unnecessary allocations', () => {
   // Mock implementations
   let stateValue: any = {};
-  const setPositionsMock = vi.fn((val) => {
+  const setPositionsMock = vi.fn((val: any) => {
     stateValue = typeof val === 'function' ? val(stateValue) : val;
   });
 
@@ -30,7 +32,7 @@ test('useGraphPhysics maintains coordinate array references and avoids unnecessa
     .mockReturnValueOnce(positionsRefObj); // second call is positionsRef
 
   let effectCallback: any = null;
-  vi.mocked(React.useEffect).mockImplementation((cb) => {
+  vi.mocked(React.useEffect).mockImplementation((cb: any) => {
     effectCallback = cb;
   });
 

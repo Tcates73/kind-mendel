@@ -79,8 +79,8 @@ export const Gallery3D: React.FC<Gallery3DProps> = ({ nodes }) => {
                 onHover={handleHover}
                 hoveredId={hoveredId}
                 reducedMotion={reducedMotion}
-                onDrag={(pos) => updateNodePosition(node.id, pos)}
-                onDragEnd={() => releaseNode(node.id)}
+                onDrag={updateNodePosition}
+                onDragEnd={releaseNode}
               />
             ))}
           </group>
