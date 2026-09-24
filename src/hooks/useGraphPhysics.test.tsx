@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { expect, test, vi } from 'vitest';
 import * as React from 'react';
 import { useGraphPhysics } from './useGraphPhysics';
@@ -25,9 +26,11 @@ test('useGraphPhysics maintains coordinate array references and avoids unnecessa
 
   const simulationRefObj = { current: null };
   const positionsRefObj = { current: {} as { [key: string]: [number, number, number] } };
+  const nodesMapRefObj = { current: new Map() };
   vi.mocked(React.useRef)
     .mockReturnValueOnce(simulationRefObj) // first call is simulation
-    .mockReturnValueOnce(positionsRefObj); // second call is positionsRef
+    .mockReturnValueOnce(positionsRefObj) // second call is positionsRef
+    .mockReturnValueOnce(nodesMapRefObj); // third call is nodesMapRef
 
   let effectCallback: any = null;
   vi.mocked(React.useEffect).mockImplementation((cb) => {
@@ -54,7 +57,7 @@ test('useGraphPhysics maintains coordinate array references and avoids unnecessa
   ];
 
   // Invoke hook
-  useGraphPhysics(mockNodes);
+  const { updateNodePosition, releaseNode } = useGraphPhysics(mockNodes);
 
   // Verify useEffect was registered
   expect(effectCallback).toBeTypeOf('function');
@@ -63,6 +66,16 @@ test('useGraphPhysics maintains coordinate array references and avoids unnecessa
   effectCallback();
 
   expect(simulationRefObj.current).not.toBeNull();
+  expect(nodesMapRefObj.current.has('node1')).toBe(true);
+
+  // Test O(1) map lookup drag operations
+  updateNodePosition('node1', [10, 20, 30]);
+  expect(nodesMapRefObj.current.get('node1').fx).toBe(10);
+  expect(nodesMapRefObj.current.get('node1').fy).toBe(20);
+  expect(nodesMapRefObj.current.get('node1').fz).toBe(30);
+
+  releaseNode('node1');
+  expect(nodesMapRefObj.current.get('node1').fx).toBeNull();
 
   // Retrieve the registered tick handler from simulation
   const simulationObj = simulationRefObj.current as any;
