@@ -11,6 +11,8 @@ interface Gallery3DProps {
   nodes: MemoryNode[];
 }
 
+const DEFAULT_POSITION: [number, number, number] = [0, 0, 0];
+
 const LoadingFallback = () => (
   <mesh>
     <boxGeometry args={[1, 1, 1]} />
@@ -74,7 +76,7 @@ export const Gallery3D: React.FC<Gallery3DProps> = ({ nodes }) => {
                 node={node}
                 index={index}
                 totalNodes={nodes.length}
-                position={positions[node.id] || [0, 0, 0]}
+                position={positions[node.id] || DEFAULT_POSITION}
                 isHovered={hoveredId === node.id}
                 onHover={handleHover}
                 hoveredId={hoveredId}
