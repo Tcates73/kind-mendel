@@ -1,11 +1,12 @@
+// @ts-ignore
 import { expect, test, vi } from 'vitest';
 import * as React from 'react';
 import { useGraphPhysics } from './useGraphPhysics';
 import { MemoryNode } from '../types';
 
 // Mock react to spy/intercept the hooks
-vi.mock('react', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('react')>();
+vi.mock('react', async (importOriginal: any) => {
+  const actual = await importOriginal();
   return {
     ...actual,
     useState: vi.fn(),
@@ -17,7 +18,7 @@ vi.mock('react', async (importOriginal) => {
 test('useGraphPhysics maintains coordinate array references and avoids unnecessary allocations', () => {
   // Mock implementations
   let stateValue: any = {};
-  const setPositionsMock = vi.fn((val) => {
+  const setPositionsMock = vi.fn((val: any) => {
     stateValue = typeof val === 'function' ? val(stateValue) : val;
   });
 
@@ -25,12 +26,14 @@ test('useGraphPhysics maintains coordinate array references and avoids unnecessa
 
   const simulationRefObj = { current: null };
   const positionsRefObj = { current: {} as { [key: string]: [number, number, number] } };
+  const nodeMapRefObj = { current: new Map() };
   vi.mocked(React.useRef)
     .mockReturnValueOnce(simulationRefObj) // first call is simulation
-    .mockReturnValueOnce(positionsRefObj); // second call is positionsRef
+    .mockReturnValueOnce(positionsRefObj) // second call is positionsRef
+    .mockReturnValueOnce(nodeMapRefObj); // third call is nodeMapRef
 
   let effectCallback: any = null;
-  vi.mocked(React.useEffect).mockImplementation((cb) => {
+  vi.mocked(React.useEffect).mockImplementation((cb: any) => {
     effectCallback = cb;
   });
 
@@ -135,4 +138,55 @@ test('useGraphPhysics maintains coordinate array references and avoids unnecessa
   expect(setPositionsMock).not.toHaveBeenCalled();
   expect(positionsRefObj.current['node1']).toBe(node1ArrayRef2);
   expect(positionsRefObj.current['node2']).toBe(node2ArrayRef2);
+});
+
+test('useGraphPhysics updateNodePosition and releaseNode work in O(1) time via nodeMapRef', () => {
+  let stateValue: any = {};
+  const setPositionsMock = vi.fn();
+  vi.mocked(React.useState).mockReturnValue([stateValue, setPositionsMock]);
+
+  const restartMock = vi.fn();
+  const alphaMock = vi.fn().mockReturnValue({ restart: restartMock });
+  const simulationRefObj = { current: { alpha: alphaMock } as any };
+  const positionsRefObj = { current: {} };
+  const nodeMapRefObj = { current: new Map() };
+
+  vi.mocked(React.useRef)
+    .mockReturnValueOnce(simulationRefObj)
+    .mockReturnValueOnce(positionsRefObj)
+    .mockReturnValueOnce(nodeMapRefObj);
+
+  let effectCallback: any = null;
+  vi.mocked(React.useEffect).mockImplementation((cb: any) => {
+    effectCallback = cb;
+  });
+
+  const mockNodes: MemoryNode[] = [
+    {
+      id: 'node1',
+      type: 'photo',
+      title: 'Node 1',
+      tags: [],
+      date: '2025-01-01',
+      connections: []
+    }
+  ];
+
+  const { updateNodePosition, releaseNode } = useGraphPhysics(mockNodes);
+
+  // Run effect callback to populate nodeMapRef
+  effectCallback();
+
+  // Test updateNodePosition
+  updateNodePosition('node1', [10, 20, 30]);
+  const indexedNode = nodeMapRefObj.current.get('node1');
+  expect(indexedNode.fx).toBe(10);
+  expect(indexedNode.fy).toBe(20);
+  expect(indexedNode.fz).toBe(30);
+
+  // Test releaseNode
+  releaseNode('node1');
+  expect(indexedNode.fx).toBeNull();
+  expect(indexedNode.fy).toBeNull();
+  expect(indexedNode.fz).toBeNull();
 });
