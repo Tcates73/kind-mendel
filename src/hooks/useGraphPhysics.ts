@@ -6,6 +6,10 @@ export const useGraphPhysics = (nodes: MemoryNode[]) => {
   const [positions, setPositions] = useState<{ [key: string]: [number, number, number] }>({});
   const simulation = useRef<any>(null);
 
+  // Bolt Optimization: Maintain an O(1) Map lookup index for simulation nodes by ID
+  // to eliminate O(N) array scanning via .find() during high-frequency 60fps drag operations.
+  const nodeMapRef = useRef<Map<string, any>>(new Map());
+
   // Bolt Optimization: Keep a persistent reference to the latest positions state
   // to compare and reuse array references in tick callbacks.
   const positionsRef = useRef<{ [key: string]: [number, number, number] }>({});
@@ -23,6 +27,11 @@ export const useGraphPhysics = (nodes: MemoryNode[]) => {
         target: targetId
       }))
     );
+
+    // Index simulation nodes by ID for O(1) lookup during high-frequency drag events
+    const nodeMap = new Map<string, any>();
+    d3Nodes.forEach(node => nodeMap.set(node.id, node));
+    nodeMapRef.current = nodeMap;
 
     // Bolt Optimization: The set of nodes and their IDs in the simulation are constant during
     // the lifespan of a single useEffect hook execution. We only need to check for mismatches
@@ -89,12 +98,17 @@ export const useGraphPhysics = (nodes: MemoryNode[]) => {
         }
       });
 
-    return () => simulation.current.stop();
+    return () => {
+      simulation.current.stop();
+      nodeMapRef.current.clear();
+    };
   }, [nodes]);
 
   const updateNodePosition = (id: string, pos: [number, number, number]) => {
     if (simulation.current) {
-      const node = simulation.current.nodes().find((n: any) => n.id === id);
+      // Bolt Optimization: O(1) Map lookup replaces O(N) array scan (.find)
+      // during 60fps drag operations.
+      const node = nodeMapRef.current.get(id);
       if (node) {
         node.fx = pos[0];
         node.fy = pos[1];
@@ -106,7 +120,9 @@ export const useGraphPhysics = (nodes: MemoryNode[]) => {
 
   const releaseNode = (id: string) => {
     if (simulation.current) {
-      const node = simulation.current.nodes().find((n: any) => n.id === id);
+      // Bolt Optimization: O(1) Map lookup replaces O(N) array scan (.find)
+      // when releasing dragged nodes.
+      const node = nodeMapRef.current.get(id);
       if (node) {
         node.fx = null;
         node.fy = null;
