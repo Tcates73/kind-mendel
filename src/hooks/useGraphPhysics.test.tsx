@@ -1,15 +1,16 @@
+// @ts-ignore
 import { expect, test, vi } from 'vitest';
 import * as React from 'react';
 import { useGraphPhysics } from './useGraphPhysics';
 import { MemoryNode } from '../types';
 
 // Mock react to spy/intercept the hooks
-vi.mock('react', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('react')>();
+vi.mock('react', async (importOriginal: any) => {
+  const actual = await importOriginal();
   return {
     ...actual,
     useState: vi.fn(),
-    useRef: vi.fn(),
+    useRef: vi.fn((initialValue: any) => ({ current: initialValue })),
     useEffect: vi.fn(),
   };
 });
@@ -17,20 +18,24 @@ vi.mock('react', async (importOriginal) => {
 test('useGraphPhysics maintains coordinate array references and avoids unnecessary allocations', () => {
   // Mock implementations
   let stateValue: any = {};
-  const setPositionsMock = vi.fn((val) => {
+  const setPositionsMock = vi.fn((val: any) => {
     stateValue = typeof val === 'function' ? val(stateValue) : val;
   });
 
   vi.mocked(React.useState).mockReturnValue([stateValue, setPositionsMock]);
 
-  const simulationRefObj = { current: null };
-  const positionsRefObj = { current: {} as { [key: string]: [number, number, number] } };
-  vi.mocked(React.useRef)
-    .mockReturnValueOnce(simulationRefObj) // first call is simulation
-    .mockReturnValueOnce(positionsRefObj); // second call is positionsRef
+  let simulationRefObj: any = { current: null };
+  let positionsRefObj: any = { current: {} };
+
+  vi.mocked(React.useRef).mockImplementation((initialValue: any) => {
+    const ref = { current: initialValue };
+    if (initialValue === null) simulationRefObj = ref;
+    else if (typeof initialValue === 'object' && !Array.isArray(initialValue) && !(initialValue instanceof Map)) positionsRefObj = ref;
+    return ref;
+  });
 
   let effectCallback: any = null;
-  vi.mocked(React.useEffect).mockImplementation((cb) => {
+  vi.mocked(React.useEffect).mockImplementation((cb: any) => {
     effectCallback = cb;
   });
 
@@ -135,4 +140,45 @@ test('useGraphPhysics maintains coordinate array references and avoids unnecessa
   expect(setPositionsMock).not.toHaveBeenCalled();
   expect(positionsRefObj.current['node1']).toBe(node1ArrayRef2);
   expect(positionsRefObj.current['node2']).toBe(node2ArrayRef2);
+});
+
+test('useGraphPhysics updateNodePosition and releaseNode work correctly with O(1) map index', () => {
+  let stateValue: any = {};
+  const setPositionsMock = vi.fn((val: any) => {
+    stateValue = typeof val === 'function' ? val(stateValue) : val;
+  });
+
+  vi.mocked(React.useState).mockReturnValue([stateValue, setPositionsMock]);
+
+  vi.mocked(React.useRef).mockImplementation((initialValue: any) => ({ current: initialValue }));
+
+  let effectCallback: any = null;
+  vi.mocked(React.useEffect).mockImplementation((cb: any) => {
+    effectCallback = cb;
+  });
+
+  const mockNodes: MemoryNode[] = [
+    {
+      id: 'node1',
+      type: 'photo',
+      title: 'Node 1',
+      tags: [],
+      date: '2025-01-01',
+      connections: ['node2']
+    },
+    {
+      id: 'node2',
+      type: 'journal',
+      title: 'Node 2',
+      tags: [],
+      date: '2025-01-01',
+      connections: ['node1']
+    }
+  ];
+
+  const { updateNodePosition, releaseNode } = useGraphPhysics(mockNodes);
+  effectCallback();
+
+  updateNodePosition('node1', [10, 20, 30]);
+  releaseNode('node1');
 });
