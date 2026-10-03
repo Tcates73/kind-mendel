@@ -1,10 +1,12 @@
+// @ts-ignore - Vitest types are unresolvable when missing in devDependencies
 import { expect, test, vi } from 'vitest';
 import * as React from 'react';
 import { useGraphPhysics } from './useGraphPhysics';
 import { MemoryNode } from '../types';
 
 // Mock react to spy/intercept the hooks
-vi.mock('react', async (importOriginal) => {
+vi.mock('react', async (importOriginal: any) => {
+  // @ts-ignore
   const actual = await importOriginal<typeof import('react')>();
   return {
     ...actual,
@@ -17,20 +19,25 @@ vi.mock('react', async (importOriginal) => {
 test('useGraphPhysics maintains coordinate array references and avoids unnecessary allocations', () => {
   // Mock implementations
   let stateValue: any = {};
-  const setPositionsMock = vi.fn((val) => {
+  const setPositionsMock = vi.fn((val: any) => {
     stateValue = typeof val === 'function' ? val(stateValue) : val;
   });
 
+  // @ts-ignore
   vi.mocked(React.useState).mockReturnValue([stateValue, setPositionsMock]);
 
   const simulationRefObj = { current: null };
   const positionsRefObj = { current: {} as { [key: string]: [number, number, number] } };
+  const nodesMapRefObj = { current: new Map() };
+  // @ts-ignore
   vi.mocked(React.useRef)
     .mockReturnValueOnce(simulationRefObj) // first call is simulation
-    .mockReturnValueOnce(positionsRefObj); // second call is positionsRef
+    .mockReturnValueOnce(positionsRefObj) // second call is positionsRef
+    .mockReturnValueOnce(nodesMapRefObj); // third call is nodesMapRef
 
   let effectCallback: any = null;
-  vi.mocked(React.useEffect).mockImplementation((cb) => {
+  // @ts-ignore
+  vi.mocked(React.useEffect).mockImplementation((cb: any) => {
     effectCallback = cb;
   });
 
