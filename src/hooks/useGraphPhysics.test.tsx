@@ -1,13 +1,14 @@
+// @ts-ignore
 import { expect, test, vi } from 'vitest';
 import * as React from 'react';
 import { useGraphPhysics } from './useGraphPhysics';
 import { MemoryNode } from '../types';
 
 // Mock react to spy/intercept the hooks
-vi.mock('react', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('react')>();
+vi.mock('react', async (importOriginal: any) => {
+  const actual = await importOriginal();
   return {
-    ...actual,
+    ...(actual as object),
     useState: vi.fn(),
     useRef: vi.fn(),
     useEffect: vi.fn(),
@@ -17,7 +18,7 @@ vi.mock('react', async (importOriginal) => {
 test('useGraphPhysics maintains coordinate array references and avoids unnecessary allocations', () => {
   // Mock implementations
   let stateValue: any = {};
-  const setPositionsMock = vi.fn((val) => {
+  const setPositionsMock = vi.fn((val: any) => {
     stateValue = typeof val === 'function' ? val(stateValue) : val;
   });
 
@@ -25,12 +26,14 @@ test('useGraphPhysics maintains coordinate array references and avoids unnecessa
 
   const simulationRefObj = { current: null };
   const positionsRefObj = { current: {} as { [key: string]: [number, number, number] } };
+  const nodeIndexRefObj = { current: new Map<string, any>() };
   vi.mocked(React.useRef)
     .mockReturnValueOnce(simulationRefObj) // first call is simulation
-    .mockReturnValueOnce(positionsRefObj); // second call is positionsRef
+    .mockReturnValueOnce(positionsRefObj) // second call is positionsRef
+    .mockReturnValueOnce(nodeIndexRefObj); // third call is nodeIndexRef
 
   let effectCallback: any = null;
-  vi.mocked(React.useEffect).mockImplementation((cb) => {
+  vi.mocked(React.useEffect).mockImplementation((cb: any) => {
     effectCallback = cb;
   });
 
@@ -54,7 +57,7 @@ test('useGraphPhysics maintains coordinate array references and avoids unnecessa
   ];
 
   // Invoke hook
-  useGraphPhysics(mockNodes);
+  const { updateNodePosition, releaseNode } = useGraphPhysics(mockNodes);
 
   // Verify useEffect was registered
   expect(effectCallback).toBeTypeOf('function');
@@ -135,4 +138,18 @@ test('useGraphPhysics maintains coordinate array references and avoids unnecessa
   expect(setPositionsMock).not.toHaveBeenCalled();
   expect(positionsRefObj.current['node1']).toBe(node1ArrayRef2);
   expect(positionsRefObj.current['node2']).toBe(node2ArrayRef2);
+
+  // Verify O(1) Map index lookups in updateNodePosition and releaseNode
+  expect(nodeIndexRefObj.current.has('node1')).toBe(true);
+
+  updateNodePosition('node1', [10, 20, 30]);
+  const indexedNode1 = nodeIndexRefObj.current.get('node1');
+  expect(indexedNode1.fx).toBe(10);
+  expect(indexedNode1.fy).toBe(20);
+  expect(indexedNode1.fz).toBe(30);
+
+  releaseNode('node1');
+  expect(indexedNode1.fx).toBeNull();
+  expect(indexedNode1.fy).toBeNull();
+  expect(indexedNode1.fz).toBeNull();
 });
