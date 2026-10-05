@@ -1,4 +1,4 @@
-import { useState, Suspense } from 'react';
+import { useState, useCallback, Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Stars, Sparkles } from '@react-three/drei';
 import { ImageCard } from './ImageCard';
@@ -10,6 +10,10 @@ import { MemoryNode } from '../types';
 interface Gallery3DProps {
   nodes: MemoryNode[];
 }
+
+// Bolt Optimization: Define module-level constant fallback position to avoid
+// allocating temporary arrays on every render when positions[node.id] is absent.
+const DEFAULT_POSITION: [number, number, number] = [0, 0, 0];
 
 const LoadingFallback = () => (
   <mesh>
@@ -27,9 +31,10 @@ export const Gallery3D: React.FC<Gallery3DProps> = ({ nodes }) => {
 
   const { positions, updateNodePosition, releaseNode } = useGraphPhysics(nodes);
 
-  const handleHover = (id: string | null) => {
+  // Bolt Optimization: Memoize hover handler to ensure stable callback reference.
+  const handleHover = useCallback((id: string | null) => {
     setHoveredId(id);
-  };
+  }, []);
 
   return (
     <>
@@ -74,13 +79,13 @@ export const Gallery3D: React.FC<Gallery3DProps> = ({ nodes }) => {
                 node={node}
                 index={index}
                 totalNodes={nodes.length}
-                position={positions[node.id] || [0, 0, 0]}
+                position={positions[node.id] || DEFAULT_POSITION}
                 isHovered={hoveredId === node.id}
+                isOtherHovered={hoveredId !== null && hoveredId !== node.id}
                 onHover={handleHover}
-                hoveredId={hoveredId}
                 reducedMotion={reducedMotion}
-                onDrag={(pos) => updateNodePosition(node.id, pos)}
-                onDragEnd={() => releaseNode(node.id)}
+                onDrag={updateNodePosition}
+                onDragEnd={releaseNode}
               />
             ))}
           </group>
