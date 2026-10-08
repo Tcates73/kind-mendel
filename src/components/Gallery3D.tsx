@@ -18,6 +18,10 @@ const LoadingFallback = () => (
   </mesh>
 );
 
+// Bolt Optimization: Module-level constant fallback position array.
+// Avoids temporary array allocations during map rendering when node position is not yet set.
+const DEFAULT_POSITION: [number, number, number] = [0, 0, 0];
+
 export const Gallery3D: React.FC<Gallery3DProps> = ({ nodes }) => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const systemReducedMotion = useReducedMotion();
@@ -74,13 +78,13 @@ export const Gallery3D: React.FC<Gallery3DProps> = ({ nodes }) => {
                 node={node}
                 index={index}
                 totalNodes={nodes.length}
-                position={positions[node.id] || [0, 0, 0]}
+                position={positions[node.id] || DEFAULT_POSITION}
                 isHovered={hoveredId === node.id}
                 onHover={handleHover}
-                hoveredId={hoveredId}
+                isOtherHovered={hoveredId !== null && hoveredId !== node.id}
                 reducedMotion={reducedMotion}
-                onDrag={(pos) => updateNodePosition(node.id, pos)}
-                onDragEnd={() => releaseNode(node.id)}
+                onDrag={updateNodePosition}
+                onDragEnd={releaseNode}
               />
             ))}
           </group>
