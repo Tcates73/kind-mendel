@@ -27,6 +27,10 @@ export const ImageCard = memo(({
   const [isDragging, setIsDragging] = useState(false);
   const { raycaster } = useThree();
 
+  // Bolt Optimization: Pre-allocate a persistent array ref to update coordinates in-place
+  // during active 60fps dragging. Eliminates array allocations on every frame.
+  const dragPosRef = useRef<[number, number, number]>([0, 0, 0]);
+
   const isOtherHovered = hoveredId !== null && hoveredId !== node.id;
 
   useFrame(() => {
@@ -37,7 +41,11 @@ export const ImageCard = memo(({
       dragPlane.set(planeNormal, -groupRef.current.position.z);
       raycaster.ray.intersectPlane(dragPlane, dragIntersection);
 
-      onDrag([dragIntersection.x, dragIntersection.y, dragIntersection.z]);
+      dragPosRef.current[0] = dragIntersection.x;
+      dragPosRef.current[1] = dragIntersection.y;
+      dragPosRef.current[2] = dragIntersection.z;
+      // Bolt Optimization: Pass elevated node.id and re-used tuple array to avoid closure and array allocation
+      onDrag(node.id, dragPosRef.current);
     } else {
       const targetPos = isHovered ? centerPosition : position;
       // Re-use scratchVector in-place to avoid new THREE.Vector3(...targetPos) allocations
@@ -93,7 +101,7 @@ export const ImageCard = memo(({
               (e.nativeEvent.target as any).releasePointerCapture(e.pointerId);
             }
             setIsDragging(false);
-            onDragEnd();
+            onDragEnd(node.id);
           }}
         >
           {/* Glowing wireframe outline */}
@@ -130,7 +138,7 @@ export const ImageCard = memo(({
               (e.nativeEvent.target as any).releasePointerCapture(e.pointerId);
             }
             setIsDragging(false);
-            onDragEnd();
+            onDragEnd(node.id);
           }}
         >
           <planeGeometry args={[1.5, 1]} />
