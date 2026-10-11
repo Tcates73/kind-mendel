@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import * as d3 from 'd3-force-3d';
 import { MemoryNode } from '../types';
 
@@ -103,7 +103,9 @@ export const useGraphPhysics = (nodes: MemoryNode[]) => {
     return () => simulation.current.stop();
   }, [nodes]);
 
-  const updateNodePosition = (id: string, pos: [number, number, number]) => {
+  // Bolt Optimization: Wrap simulation interaction callbacks in useCallback
+  // to maintain stable function references across physics ticks and re-renders.
+  const updateNodePosition = useCallback((id: string, pos: [number, number, number]) => {
     if (simulation.current) {
       const node = nodeIndexRef.current.get(id);
       if (node) {
@@ -113,9 +115,9 @@ export const useGraphPhysics = (nodes: MemoryNode[]) => {
         simulation.current.alpha(0.3).restart();
       }
     }
-  };
+  }, []);
 
-  const releaseNode = (id: string) => {
+  const releaseNode = useCallback((id: string) => {
     if (simulation.current) {
       const node = nodeIndexRef.current.get(id);
       if (node) {
@@ -125,7 +127,7 @@ export const useGraphPhysics = (nodes: MemoryNode[]) => {
         simulation.current.alpha(0.3).restart();
       }
     }
-  };
+  }, []);
 
   return { positions, updateNodePosition, releaseNode };
 };

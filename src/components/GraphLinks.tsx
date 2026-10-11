@@ -1,4 +1,4 @@
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, memo } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 
@@ -7,7 +7,9 @@ interface GraphLinksProps {
   positions: { [key: string]: [number, number, number] };
 }
 
-export const GraphLinks: React.FC<GraphLinksProps> = ({ nodes, positions }) => {
+// Bolt Optimization: Wrap component in React.memo to prevent unnecessary React re-renders
+// when parent Gallery3D state (e.g. hoveredId or HUD state) changes.
+export const GraphLinks = memo<GraphLinksProps>(({ nodes, positions }) => {
   const lineGeometry = useRef<THREE.BufferGeometry>(null);
 
   const links = useMemo(() => {
@@ -89,4 +91,6 @@ export const GraphLinks: React.FC<GraphLinksProps> = ({ nodes, positions }) => {
       <lineBasicMaterial color="#00ffff" transparent opacity={0.2} />
     </lineSegments>
   );
-};
+});
+
+GraphLinks.displayName = 'GraphLinks';

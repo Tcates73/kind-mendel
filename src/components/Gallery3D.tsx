@@ -1,4 +1,4 @@
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Stars, Sparkles } from '@react-three/drei';
 import { ImageCard } from './ImageCard';
@@ -10,6 +10,10 @@ import { MemoryNode } from '../types';
 interface Gallery3DProps {
   nodes: MemoryNode[];
 }
+
+// Bolt Optimization: Define module-level constant fallback position array to prevent
+// repetitive array allocations on every render for uninitialized nodes.
+const DEFAULT_POSITION: [number, number, number] = [0, 0, 0];
 
 const LoadingFallback = () => (
   <mesh>
@@ -27,9 +31,9 @@ export const Gallery3D: React.FC<Gallery3DProps> = ({ nodes }) => {
 
   const { positions, updateNodePosition, releaseNode } = useGraphPhysics(nodes);
 
-  const handleHover = (id: string | null) => {
+  const handleHover = useCallback((id: string | null) => {
     setHoveredId(id);
-  };
+  }, []);
 
   return (
     <>
@@ -74,7 +78,7 @@ export const Gallery3D: React.FC<Gallery3DProps> = ({ nodes }) => {
                 node={node}
                 index={index}
                 totalNodes={nodes.length}
-                position={positions[node.id] || [0, 0, 0]}
+                position={positions[node.id] || DEFAULT_POSITION}
                 isHovered={hoveredId === node.id}
                 onHover={handleHover}
                 hoveredId={hoveredId}
