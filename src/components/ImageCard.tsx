@@ -19,15 +19,13 @@ export const ImageCard = memo(({
   position,
   isHovered,
   onHover,
-  hoveredId,
+  isOtherHovered,
   onDrag,
   onDragEnd,
 }: ImageCardProps) => {
   const groupRef = useRef<THREE.Group>(null);
   const [isDragging, setIsDragging] = useState(false);
   const { raycaster } = useThree();
-
-  const isOtherHovered = hoveredId !== null && hoveredId !== node.id;
 
   useFrame(() => {
     if (!groupRef.current) return;
@@ -212,7 +210,8 @@ export const ImageCard = memo(({
   // Bolt Optimization: Only re-render when properties that affect React rendering change.
   // We compare position values element-by-element since physical coordinate arrays are
   // re-created on each physics simulation tick, which would fail standard reference equality.
-  // We bypass inline functions because their actions are identical for the same node ID.
+  // We compare boolean isOtherHovered instead of raw hoveredId string so that unaffected
+  // sibling nodes bail out of re-rendering when hover focus moves between other cards.
   return (
     prevProps.node.id === nextProps.node.id &&
     prevProps.node.type === nextProps.node.type &&
@@ -220,7 +219,7 @@ export const ImageCard = memo(({
     prevProps.index === nextProps.index &&
     prevProps.totalNodes === nextProps.totalNodes &&
     prevProps.isHovered === nextProps.isHovered &&
-    prevProps.hoveredId === nextProps.hoveredId &&
+    prevProps.isOtherHovered === nextProps.isOtherHovered &&
     prevProps.reducedMotion === nextProps.reducedMotion &&
     prevProps.position[0] === nextProps.position[0] &&
     prevProps.position[1] === nextProps.position[1] &&

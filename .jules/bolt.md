@@ -15,3 +15,7 @@
 ## 2025-07-28 - O(1) Simulation Node Map Index Pattern
 **Learning:** Calling `simulation.nodes().find(...)` inside high-frequency 60fps drag callbacks (like `onDrag` handlers in Three.js / React-Three-Fiber) creates an $O(N)$ linear scan and array copy/fetch on every mouse movement frame. In interactive 3D simulations with many nodes, this introduces CPU lag and GC thrashing. Maintaining a persistent `Map<string, Node>` ref initialized once during simulation setup provides instant $O(1)$ constant-time node lookups during drag operations.
 **Action:** When working with force simulations (e.g. `d3-force-3d`) inside React hooks, maintain a `nodeIndexRef` Map using `useRef` populated during simulation setup to access simulation nodes by ID in $O(1)$ time without array allocations or linear scans.
+
+## 2026-10-12 - Contextual Boolean Transition Pattern for Sibling Bailing
+**Learning:** Passing global hover identifiers (e.g., raw `hoveredId` string) into mapped graph children breaks custom `React.memo` comparisons on EVERY sibling node whenever hover focus changes. Sibling components see `prevProps.hoveredId !== nextProps.hoveredId` and re-render unnecessarily.
+**Action:** Pre-compute contextual boolean flags (like `isOtherHovered`) in the parent mapping loop before passing them as props. When hover focus moves between items, unaffected sibling items retain identical boolean prop values (`isHovered: false`, `isOtherHovered: true`), allowing `React.memo` to bail out of re-rendering $N-2$ unaffected components in $O(1)$ time.
