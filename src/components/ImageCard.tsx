@@ -19,15 +19,13 @@ export const ImageCard = memo(({
   position,
   isHovered,
   onHover,
-  hoveredId,
+  isOtherHovered,
   onDrag,
   onDragEnd,
 }: ImageCardProps) => {
   const groupRef = useRef<THREE.Group>(null);
   const [isDragging, setIsDragging] = useState(false);
   const { raycaster } = useThree();
-
-  const isOtherHovered = hoveredId !== null && hoveredId !== node.id;
 
   useFrame(() => {
     if (!groupRef.current) return;
@@ -220,7 +218,7 @@ export const ImageCard = memo(({
     prevProps.index === nextProps.index &&
     prevProps.totalNodes === nextProps.totalNodes &&
     prevProps.isHovered === nextProps.isHovered &&
-    prevProps.hoveredId === nextProps.hoveredId &&
+    prevProps.isOtherHovered === nextProps.isOtherHovered &&
     prevProps.reducedMotion === nextProps.reducedMotion &&
     prevProps.position[0] === nextProps.position[0] &&
     prevProps.position[1] === nextProps.position[1] &&

@@ -1,4 +1,4 @@
-import { useState, Suspense } from 'react';
+import { useState, useCallback, Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Stars, Sparkles } from '@react-three/drei';
 import { ImageCard } from './ImageCard';
@@ -10,6 +10,10 @@ import { MemoryNode } from '../types';
 interface Gallery3DProps {
   nodes: MemoryNode[];
 }
+
+// Bolt Optimization: Define fallback position array as a module-level constant to prevent
+// creating temporary array allocations on every render pass when node positions are uninitialized.
+const DEFAULT_POSITION: [number, number, number] = [0, 0, 0];
 
 const LoadingFallback = () => (
   <mesh>
@@ -27,9 +31,9 @@ export const Gallery3D: React.FC<Gallery3DProps> = ({ nodes }) => {
 
   const { positions, updateNodePosition, releaseNode } = useGraphPhysics(nodes);
 
-  const handleHover = (id: string | null) => {
+  const handleHover = useCallback((id: string | null) => {
     setHoveredId(id);
-  };
+  }, []);
 
   return (
     <>
@@ -68,21 +72,27 @@ export const Gallery3D: React.FC<Gallery3DProps> = ({ nodes }) => {
 
           <group>
             <GraphLinks nodes={nodes} positions={positions} />
-            {nodes.map((node, index) => (
-              <ImageCard
-                key={node.id}
-                node={node}
-                index={index}
-                totalNodes={nodes.length}
-                position={positions[node.id] || [0, 0, 0]}
-                isHovered={hoveredId === node.id}
-                onHover={handleHover}
-                hoveredId={hoveredId}
-                reducedMotion={reducedMotion}
-                onDrag={(pos) => updateNodePosition(node.id, pos)}
-                onDragEnd={() => releaseNode(node.id)}
-              />
-            ))}
+            {nodes.map((node, index) => {
+              // Bolt Optimization: Compute isOtherHovered as a contextual boolean prop.
+              // When hovering shifts between nodes, unaffected sibling nodes receive the exact same
+              // isOtherHovered boolean value (true), allowing React.memo to bail out of re-rendering them.
+              const isOtherHovered = hoveredId !== null && hoveredId !== node.id;
+              return (
+                <ImageCard
+                  key={node.id}
+                  node={node}
+                  index={index}
+                  totalNodes={nodes.length}
+                  position={positions[node.id] || DEFAULT_POSITION}
+                  isHovered={hoveredId === node.id}
+                  onHover={handleHover}
+                  isOtherHovered={isOtherHovered}
+                  reducedMotion={reducedMotion}
+                  onDrag={(pos) => updateNodePosition(node.id, pos)}
+                  onDragEnd={() => releaseNode(node.id)}
+                />
+              );
+            })}
           </group>
 
           <OrbitControls

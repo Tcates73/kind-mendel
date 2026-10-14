@@ -24,7 +24,7 @@ export interface ImageCardProps {
   position: [number, number, number];
   isHovered: boolean;
   onHover: (id: string | null) => void;
-  hoveredId: string | null;
+  isOtherHovered: boolean;
   reducedMotion: boolean;
   onDrag: (pos: [number, number, number]) => void;
   onDragEnd: () => void;
