@@ -1,5 +1,9 @@
 # Bolt's Journal
 
+## 2025-08-07 - React-Three-Fiber Parent State Hover Transition Pattern
+**Learning:** Passing global state hover IDs (`hoveredId: string | null`) down into mapped list elements causes `memo` custom comparators to evaluate to `false` for every single element, leading to O(N) re-renders across the entire collection whenever any element is hovered or unhovered. Even though only the hovered card needs visual change, passing the raw `hoveredId` forces React to re-evaluate fiber nodes for every single item in the list.
+**Action:** Compute contextual boolean states like `isOtherHovered` directly in the parent component's loop and pass them as flat booleans. This allows stable sibling elements to perfectly preserve their props (keeping `isOtherHovered: true` and `isHovered: false`), allowing React's `memo` to completely bail out of rendering unaffected sibling elements, reducing the hover transition re-render footprint from O(N) to O(1).
+
 ## 2025-07-18 - R3F Off-React-Thread Rendering Pattern
 **Learning:** In React-Three-Fiber (R3F), when 3D object positions are updated continuously by a physics engine or tickers, rendering performance degrades if we trigger standard React component re-renders for every single update. Because the position updates are handled imperatively inside the `useFrame` hook (e.g. by mutating `groupRef.current.position.lerp()`), the component's JSX structure, material bindings, and React Fiber nodes do not need to re-render. Standard `React.memo` fails here because parent renders re-create new position array instances on every frame.
 **Action:** Always wrap R3F elements (like `ImageCard`) in `React.memo` with a custom comparator that does deep numeric comparison of coordinates (`prevProps.position[0] === nextProps.position[0]` etc.) and bypasses inline callbacks. This shields the React render tree from frequent physical simulation updates while still keeping the `useFrame` animation fully functional.

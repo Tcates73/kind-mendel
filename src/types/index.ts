@@ -24,10 +24,10 @@ export interface ImageCardProps {
   position: [number, number, number];
   isHovered: boolean;
   onHover: (id: string | null) => void;
-  hoveredId: string | null;
+  isOtherHovered: boolean;
   reducedMotion: boolean;
-  onDrag: (pos: [number, number, number]) => void;
-  onDragEnd: () => void;
+  onDrag: (id: string, pos: [number, number, number]) => void;
+  onDragEnd: (id: string) => void;
 }
 
 // Deprecated - for backward compatibility during transition

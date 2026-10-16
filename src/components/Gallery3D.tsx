@@ -1,4 +1,4 @@
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Stars, Sparkles } from '@react-three/drei';
 import { ImageCard } from './ImageCard';
@@ -27,9 +27,9 @@ export const Gallery3D: React.FC<Gallery3DProps> = ({ nodes }) => {
 
   const { positions, updateNodePosition, releaseNode } = useGraphPhysics(nodes);
 
-  const handleHover = (id: string | null) => {
+  const handleHover = useCallback((id: string | null) => {
     setHoveredId(id);
-  };
+  }, []);
 
   return (
     <>
@@ -77,10 +77,10 @@ export const Gallery3D: React.FC<Gallery3DProps> = ({ nodes }) => {
                 position={positions[node.id] || [0, 0, 0]}
                 isHovered={hoveredId === node.id}
                 onHover={handleHover}
-                hoveredId={hoveredId}
+                isOtherHovered={hoveredId !== null && hoveredId !== node.id}
                 reducedMotion={reducedMotion}
-                onDrag={(pos) => updateNodePosition(node.id, pos)}
-                onDragEnd={() => releaseNode(node.id)}
+                onDrag={updateNodePosition}
+                onDragEnd={releaseNode}
               />
             ))}
           </group>
