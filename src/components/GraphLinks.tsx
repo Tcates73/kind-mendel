@@ -26,18 +26,8 @@ export const GraphLinks: React.FC<GraphLinksProps> = ({ nodes, positions }) => {
   useFrame(() => {
     if (!lineGeometry.current) return;
 
-    // First count how many links have both source and target positions ready
-    let activeLinksCount = 0;
-    for (let i = 0; i < links.length; i++) {
-      const link = links[i];
-      if (positions[link.source] && positions[link.target]) {
-        activeLinksCount++;
-      }
-    }
-    const verticesLength = activeLinksCount * 6;
-
-    if (verticesLength === 0) {
-      // If no node positions are populated yet, clear the position attribute if it exists
+    const maxVerticesLength = links.length * 6;
+    if (maxVerticesLength === 0) {
       const positionAttr = lineGeometry.current.getAttribute('position') as THREE.BufferAttribute;
       if (positionAttr && positionAttr.array.length > 0) {
         lineGeometry.current.deleteAttribute('position');
@@ -48,12 +38,14 @@ export const GraphLinks: React.FC<GraphLinksProps> = ({ nodes, positions }) => {
     const positionAttr = lineGeometry.current.getAttribute('position') as THREE.BufferAttribute;
 
     let arr: Float32Array;
-    // Bolt Optimization: If the buffer array already exists with the correct length, reuse it in-place.
-    // This avoids creating temporary arrays and invoking garbage collection during the 60fps render loop.
-    if (positionAttr && positionAttr.array.length === verticesLength) {
+    // Bolt Optimization: Allocate/reuse Float32Array at max capacity (links.length * 6).
+    // In a single pass, populate active link coordinates and use setDrawRange to specify active vertices.
+    // This reduces loop iterations and object lookups by 50% on every 60fps frame, while completely
+    // eliminating buffer array allocations when active link counts fluctuate.
+    if (positionAttr && positionAttr.array.length === maxVerticesLength) {
       arr = positionAttr.array as Float32Array;
     } else {
-      arr = new Float32Array(verticesLength);
+      arr = new Float32Array(maxVerticesLength);
     }
 
     let index = 0;
@@ -71,16 +63,19 @@ export const GraphLinks: React.FC<GraphLinksProps> = ({ nodes, positions }) => {
       }
     }
 
-    if (positionAttr && positionAttr.array.length === verticesLength) {
+    if (positionAttr && positionAttr.array.length === maxVerticesLength) {
       // Mark the attribute as needing an update to tell WebGL to re-upload the modified array
       positionAttr.needsUpdate = true;
     } else {
-      // Create a new BufferAttribute if length changed or was not set
+      // Create a new BufferAttribute once at max capacity
       lineGeometry.current.setAttribute(
         'position',
         new THREE.Float32BufferAttribute(arr, 3)
       );
     }
+
+    // Set drawRange to render only active line segment vertices (index / 3 count)
+    lineGeometry.current.setDrawRange(0, index / 3);
   });
 
   return (
