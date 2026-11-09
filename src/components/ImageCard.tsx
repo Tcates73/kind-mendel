@@ -37,7 +37,9 @@ export const ImageCard = memo(({
       dragPlane.set(planeNormal, -groupRef.current.position.z);
       raycaster.ray.intersectPlane(dragPlane, dragIntersection);
 
-      onDrag([dragIntersection.x, dragIntersection.y, dragIntersection.z]);
+      // Bolt Optimization: Pass node.id directly to onDrag handler, allowing parent components
+      // to supply stable memoized callbacks without allocating inline arrow functions on every render pass.
+      onDrag(node.id, [dragIntersection.x, dragIntersection.y, dragIntersection.z]);
     } else {
       const targetPos = isHovered ? centerPosition : position;
       // Re-use scratchVector in-place to avoid new THREE.Vector3(...targetPos) allocations
@@ -93,7 +95,7 @@ export const ImageCard = memo(({
               (e.nativeEvent.target as any).releasePointerCapture(e.pointerId);
             }
             setIsDragging(false);
-            onDragEnd();
+            onDragEnd(node.id);
           }}
         >
           {/* Glowing wireframe outline */}
@@ -130,7 +132,7 @@ export const ImageCard = memo(({
               (e.nativeEvent.target as any).releasePointerCapture(e.pointerId);
             }
             setIsDragging(false);
-            onDragEnd();
+            onDragEnd(node.id);
           }}
         >
           <planeGeometry args={[1.5, 1]} />
